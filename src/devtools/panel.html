@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ViNetwork</title>
+  <script type="module" src="./panel.ts"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Mode indicator -->
+    <div id="mode-indicator" class="mode-indicator">
+      <span id="mode-text">NORMAL</span>
+    </div>
+
+    <!-- Search bar (hidden by default) -->
+    <div id="search-bar" class="search-bar hidden">
+      <span class="search-prefix">/</span>
+      <input type="text" id="search-input" placeholder="Search URLs..." />
+    </div>
+
+    <!-- Filter bar (hidden by default) -->
+    <div id="filter-bar" class="filter-bar hidden">
+      <div class="filter-options">
+        <label class="filter-option" data-index="0"><input type="checkbox" value="all" checked /> All</label>
+        <label class="filter-option" data-index="1"><input type="checkbox" value="fetch/xhr" /> Fetch/XHR</label>
+        <label class="filter-option" data-index="2"><input type="checkbox" value="document" /> Doc</label>
+        <label class="filter-option" data-index="3"><input type="checkbox" value="stylesheet" /> CSS</label>
+        <label class="filter-option" data-index="4"><input type="checkbox" value="script" /> JS</label>
+        <label class="filter-option" data-index="5"><input type="checkbox" value="font" /> Font</label>
+        <label class="filter-option" data-index="6"><input type="checkbox" value="image" /> Img</label>
+        <label class="filter-option" data-index="7"><input type="checkbox" value="media" /> Media</label>
+        <label class="filter-option" data-index="8"><input type="checkbox" value="manifest" /> Manifest</label>
+        <label class="filter-option" data-index="9"><input type="checkbox" value="websocket" /> Socket</label>
+        <label class="filter-option" data-index="10"><input type="checkbox" value="wasm" /> Wasm</label>
+        <label class="filter-option" data-index="11"><input type="checkbox" value="other" /> Other</label>
+      </div>
+    </div>
+
+    <!-- Copy bar (hidden by default) -->
+    <div id="copy-bar" class="copy-bar hidden">
+      <div class="copy-options">
+        <div class="copy-option" data-index="0">Copy as cURL</div>
+        <div class="copy-option" data-index="1">Copy URL</div>
+        <div class="copy-option" data-index="2">Copy Request Headers</div>
+        <div class="copy-option" data-index="3">Copy Response Headers</div>
+        <div class="copy-option" data-index="4">Copy Response Body</div>
+      </div>
+    </div>
+
+    <!-- Inspect mode search bar (hidden by default) -->
+    <div id="inspect-search-bar" class="search-bar hidden">
+      <span class="search-prefix">/</span>
+      <input type="text" id="inspect-search-input" placeholder="Search in panel..." />
+      <span id="inspect-search-status" class="search-status"></span>
+    </div>
+
+    <!-- Network requests table -->
+    <div id="network-table" class="network-table">
+      <div class="table-header">
+        <div class="col-name">Name</div>
+        <div class="col-status">Status</div>
+        <div class="col-method">Method</div>
+        <div class="col-type">Type</div>
+        <div class="col-size">Size</div>
+      </div>
+      <div id="table-body" class="table-body">
+        <!-- Network requests will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Status bar - shows request counts and stats like native Network tab -->
+    <div id="status-bar" class="status-bar">
+      <span id="status-requests">0 requests</span>
+      <span class="status-separator">|</span>
+      <span id="status-transferred">0 B transferred</span>
+      <span id="status-search" class="status-search hidden"></span>
+    </div>
+
+    <!-- Preview pane -->
+    <div id="preview-pane" class="preview-pane">
+      <div class="preview-tabs">
+        <button class="tab-button active" data-tab="headers">Headers [Shift+H]</button>
+        <button class="tab-button" data-tab="response">Response [Shift+L]</button>
+        <button class="tab-button" data-tab="preview">Preview [Shift+P]</button>
+      </div>
+      
+      <div class="preview-content">
+        <div id="headers-view" class="preview-tab active" tabindex="-1">
+          <div class="headers-section">
+            <h3>Request Headers</h3>
+            <div id="request-headers"></div>
+          </div>
+          <div class="headers-section">
+            <h3>Response Headers</h3>
+            <div id="response-headers"></div>
+          </div>
+        </div>
+        
+        <div id="response-view" class="preview-tab" tabindex="-1">
+          <pre id="response-body"></pre>
+        </div>
+        
+        <div id="preview-view" class="preview-tab" tabindex="-1">
+          <div id="json-viewer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help panel -->
+    <div id="help-panel" class="help-panel">
+      <div class="help-content">
+        <h3>ViNetwork - Keyboard Shortcuts</h3>
+        <dl>
+          <dt>j / k</dt><dd>Move down / up (Headers: navigate items; Others: scroll)</dd>
+          <dt>h / l</dt><dd>Headers: collapse/expand sections; JSON: collapse/expand</dd>
+          <dt>y</dt><dd>In Headers: copy (yank) selected header</dd>
+          <dt>gg / G</dt><dd>Go to top / bottom</dd>
+          <dt>Tab / Shift+Tab</dt><dd>In Inspect: cycle through panels</dd>
+          <dt>/</dt><dd>Search (in Inspect: search within panel)</dd>
+          <dt>n / N</dt><dd>In Inspect: next/previous search match</dd>
+          <dt>f</dt><dd>Filter mode</dd>
+          <dt>c</dt><dd>Copy menu (h/l to navigate, Enter to copy)</dd>
+          <dt>dd</dt><dd>Delete selected request</dd>
+          <dt>dr</dt><dd>Clear all requests</dd>
+          <dt>Enter</dt><dd>Inspect request (enter Inspect mode)</dd>
+          <dt>z</dt><dd>In Inspect: toggle fullscreen</dd>
+          <dt>Ctrl+s</dt><dd>Export data</dd>
+          <dt>Ctrl+d / Ctrl+u</dt><dd>In Inspect: half-page down/up</dd>
+          <dt>Shift+H/L/P</dt><dd>Switch to Headers/Response/Preview tabs</dd>
+          <dt>q</dt><dd>Exit mode / back to Normal</dd>
+        </dl>
+        <p class="help-footer">Press ? to toggle this help</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

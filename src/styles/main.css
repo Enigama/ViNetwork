@@ -1,0 +1,671 @@
+:root {
+  /* Color palette inspired by popular Vim themes */
+  --vim-bg: #1e1e1e;              /* Editor background */
+  --vim-fg: #d4d4d4;              /* Normal text */
+  --vim-normal: #569cd6;          /* Normal mode color (blue) */
+  --vim-insert: #4ec9b0;          /* Insert mode color (cyan) */
+  --vim-visual: #c586c0;          /* Visual mode color (purple) */
+  --vim-search: #dcdcaa;          /* Search highlight (yellow) */
+  --vim-selected: #264f78;        /* Selected line background */
+  --vim-border: #3e3e3e;          /* Borders and separators */
+  --vim-success: #4ec9b0;         /* 2xx status codes */
+  --vim-error: #f48771;           /* 4xx/5xx status codes */
+  --vim-warning: #dcdcaa;         /* 3xx status codes */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  background-color: var(--vim-bg);
+  color: var(--vim-fg);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Mode indicator bar - changes color based on mode */
+.mode-indicator {
+  background-color: var(--vim-normal);
+  color: var(--vim-bg);
+  padding: 4px 12px;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.mode-indicator[data-mode="search"] {
+  background-color: var(--vim-search);
+  color: var(--vim-bg);
+}
+
+.mode-indicator[data-mode="filter"] {
+  background-color: var(--vim-visual);
+}
+
+.mode-indicator[data-mode="inspect"] {
+  background-color: var(--vim-insert);
+}
+
+/* Search and filter bars */
+.search-bar,
+.filter-bar {
+  padding: 8px;
+  background-color: #252526;
+  border-bottom: 1px solid var(--vim-border);
+}
+
+.search-bar.hidden,
+.filter-bar.hidden {
+  display: none;
+}
+
+.search-prefix {
+  color: var(--vim-search);
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+#search-input {
+  background-color: var(--vim-bg);
+  color: var(--vim-fg);
+  border: 1px solid var(--vim-border);
+  padding: 4px 8px;
+  width: 400px;
+  font-family: inherit;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--vim-search);
+}
+
+.filter-options {
+  display: flex;
+  gap: 16px;
+}
+
+.filter-options label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-option {
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s, outline 0.2s;
+}
+
+.filter-option.filter-selected {
+  background-color: var(--vim-selected);
+  outline: 2px solid var(--vim-normal);
+}
+
+.filter-options input[type="checkbox"] {
+  margin-right: 4px;
+  cursor: pointer;
+}
+
+/* Network table */
+.network-table {
+  flex: 1;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--vim-border);
+  transition: flex 0.2s ease;
+}
+
+/* Collapsed network table in inspect mode (fullscreen for preview pane) */
+.network-table.collapsed {
+  display: none;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 70px 80px 100px 100px; /* Name, Status, Method, Type, Size */
+  background-color: #252526;
+  padding: 8px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--vim-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-body {
+  font-size: 13px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 70px 80px 100px 100px; /* Name, Status, Method, Type, Size */
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vim-border);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  height: 28px;
+  box-sizing: border-box;
+}
+
+.table-row:hover {
+  background-color: #2a2a2a;
+}
+
+/* Table row selection - mimics Vim's visual line */
+.table-row.selected {
+  background-color: var(--vim-selected);
+  border-left: 3px solid var(--vim-normal); /* Vim-style cursor line */
+}
+
+/* Column-specific styling */
+.col-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--vim-insert);
+}
+
+/* Status code colors - immediate visual feedback */
+.status-200 { color: var(--vim-success); }   /* Green for success */
+.status-300 { color: var(--vim-warning); }   /* Yellow for redirects */
+.status-400,
+.status-500 { color: var(--vim-error); }     /* Red for errors */
+
+.col-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Preview pane */
+.preview-pane {
+  height: 300px;
+  border-top: 2px solid var(--vim-normal);
+  display: flex;
+  flex-direction: column;
+  transition: flex 0.2s ease;
+}
+
+/* Expanded preview pane in inspect mode */
+.preview-pane.expanded {
+  flex: 1;
+  height: auto;
+}
+
+.preview-tabs {
+  display: flex;
+  background-color: #252526;
+  border-bottom: 1px solid var(--vim-border);
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--vim-fg);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.tab-button:hover {
+  background-color: #2a2a2a;
+}
+
+.tab-button.active {
+  background-color: var(--vim-normal);
+  color: var(--vim-bg);
+}
+
+.preview-content {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+}
+
+.preview-tab {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+}
+
+.preview-tab.active {
+  display: block;
+}
+
+.headers-section {
+  margin-bottom: 24px;
+}
+
+.headers-section h3 {
+  color: var(--vim-normal);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.header-row {
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.header-key {
+  color: var(--vim-search);
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.header-value {
+  color: var(--vim-fg);
+}
+
+#response-body {
+  background-color: #252526;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 12px;
+}
+
+/* JSON Viewer */
+.json-node {
+  padding: 2px 0;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.6;
+  border-left: 3px solid transparent;
+  margin-left: -3px;
+  padding-left: 3px;
+}
+
+.json-node:hover {
+  background-color: #2a2a2a;
+}
+
+.json-node.selected {
+  background-color: var(--vim-selected);
+  border-left: 3px solid var(--vim-normal);
+}
+
+.json-icon {
+  display: inline-block;
+  width: 16px;
+  color: var(--vim-normal);
+  font-size: 10px;
+}
+
+.json-key {
+  color: var(--vim-search);
+  font-weight: bold;
+}
+
+.json-value {
+  color: var(--vim-fg);
+}
+
+.json-value-string {
+  color: #ce9178;
+}
+
+.json-value-number {
+  color: #b5cea8;
+}
+
+.json-value-boolean {
+  color: var(--vim-normal);
+}
+
+.json-count {
+  color: #888;
+  font-style: italic;
+}
+
+/* Help panel */
+.help-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #252526;
+  border: 2px solid var(--vim-normal);
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 600px;
+  display: none;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.help-panel.visible {
+  display: block;
+}
+
+.help-content h3 {
+  color: var(--vim-normal);
+  margin-bottom: 16px;
+}
+
+.help-content dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.help-content dt {
+  color: var(--vim-search);
+  font-weight: bold;
+}
+
+.help-content dd {
+  margin: 0;
+}
+
+.help-footer {
+  margin-top: 16px;
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+}
+
+/* Inspect mode specific styles */
+
+/* Focused panel indicator in inspect mode */
+.preview-tab.focused {
+  outline: 2px solid var(--vim-normal);
+  outline-offset: -2px;
+}
+
+/* Search highlight in inspect panels */
+.search-highlight {
+  background-color: var(--vim-search);
+  color: var(--vim-bg);
+  font-weight: bold;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.search-highlight.current {
+  background-color: var(--vim-normal);
+}
+
+/* Search status indicator */
+.search-status {
+  margin-left: 12px;
+  color: #888;
+  font-size: 11px;
+}
+
+/* Inspect search input styling */
+#inspect-search-input {
+  background-color: var(--vim-bg);
+  color: var(--vim-fg);
+  border: 1px solid var(--vim-border);
+  padding: 4px 8px;
+  width: 400px;
+  font-family: inherit;
+}
+
+#inspect-search-input:focus {
+  outline: none;
+  border-color: var(--vim-search);
+}
+
+/* Make preview panels scrollable with keyboard focus indicator */
+.preview-tab {
+  scroll-behavior: smooth;
+}
+
+.preview-tab:focus {
+  outline: none;
+}
+
+.preview-tab.focused {
+  outline: 2px solid var(--vim-normal);
+  outline-offset: -2px;
+}
+
+/* Headers list styling */
+.headers-section-title {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.headers-section-title:hover {
+  color: var(--vim-insert);
+}
+
+.collapse-icon {
+  display: inline-block;
+  width: 16px;
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+.headers-list {
+  transition: max-height 0.2s ease;
+}
+
+.headers-list.collapsed {
+  display: none;
+}
+
+.header-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  display: flex;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.header-item:hover {
+  background-color: #2a2a2a;
+}
+
+.header-item.selected {
+  background-color: var(--vim-selected);
+  border-left: 3px solid var(--vim-normal);
+  padding-left: 5px;
+}
+
+.header-item .header-key {
+  color: var(--vim-search);
+  font-weight: bold;
+  min-width: 150px;
+  flex-shrink: 0;
+}
+
+.header-item .header-value {
+  color: var(--vim-fg);
+  word-break: break-all;
+  flex: 1;
+}
+
+/* General section status colors */
+.header-item .header-value.status-success {
+  color: var(--vim-success);
+  font-weight: 500;
+}
+
+.header-item .header-value.status-redirect {
+  color: var(--vim-warning);
+  font-weight: 500;
+}
+
+.header-item .header-value.status-error {
+  color: var(--vim-error);
+  font-weight: 500;
+}
+
+/* Copy Bar - similar to filter bar */
+.copy-bar {
+  background-color: #2a2a2a;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vim-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-bar.hidden {
+  display: none;
+}
+
+.copy-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.copy-option {
+  padding: 6px 12px;
+  background-color: #3e3e3e;
+  border: 1px solid var(--vim-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.copy-option:hover {
+  background-color: #4a4a4a;
+}
+
+.copy-option.selected {
+  background-color: var(--vim-normal);
+  color: var(--vim-bg);
+  border-color: var(--vim-normal);
+  font-weight: 500;
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #2a2a2a;
+  color: var(--vim-fg);
+  padding: 12px 20px;
+  border-radius: 4px;
+  border: 1px solid var(--vim-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 2000;
+  font-size: 13px;
+}
+
+.toast.visible {
+  opacity: 1;
+}
+
+/* Status bar - mimics native Network tab */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background-color: #252526;
+  border-top: 1px solid var(--vim-border);
+  border-bottom: 1px solid var(--vim-border);
+  font-size: 11px;
+  color: #858585;
+  font-family: 'Segoe UI', Arial, sans-serif; /* Match native DevTools font */
+  min-height: 24px;
+}
+
+.status-separator {
+  color: var(--vim-border);
+}
+
+#status-requests {
+  color: var(--vim-fg);
+  font-weight: 500;
+}
+
+#status-transferred {
+  color: var(--vim-fg);
+}
+
+#status-finish {
+  color: var(--vim-fg);
+}
+
+#status-resources {
+  color: #858585;
+}
+
+/* Search filter indicator */
+.status-search {
+  margin-left: auto;
+  padding: 2px 8px;
+  background-color: var(--vim-search);
+  color: var(--vim-bg);
+  border-radius: 3px;
+  font-weight: 500;
+  font-size: 11px;
+}
+
+.status-search.hidden {
+  display: none;
+}
+
+/* Hide status bar when in collapsed inspect mode */
+.network-table.collapsed ~ .status-bar {
+  display: none;
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* GPU-accelerated rendering */
+.table-row {
+  will-change: transform;
+  contain: layout style paint;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 28px; /* Match actual row height: 6px padding + ~14px content + 6px padding + 1px border */
+}
+
+/* Prevent layout thrashing */
+.table-body {
+  contain: strict;
+  overflow-anchor: none;
+}
+
+/* Disable smooth scrolling for instant navigation */
+.preview-tab {
+  scroll-behavior: auto;
+}
+
+/* Optimize hover effects */
+.table-row:hover,
+.header-item:hover,
+.copy-option:hover {
+  will-change: background-color;
+}
+
