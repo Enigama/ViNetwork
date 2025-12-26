@@ -3,3 +3,7 @@ dist/
 *.log
 .DS_Store
 
+# Store build artifacts
+store/*.zip
+store/screenshot-*.png
+
