@@ -151,12 +151,6 @@ export class KeyboardHandler {
         this.toggleJsonFormat();
         break;
 
-      case '?':
-        // Toggle help panel
-        event.preventDefault();
-        this.toggleHelp();
-        break;
-
       case 'c':
         // Enter copy mode (show copy bar)
         this.stateManager.setState({ mode: AppMode.COPY });
@@ -173,6 +167,11 @@ export class KeyboardHandler {
         case 'p':
           event.preventDefault();
           this.quickSearch();
+          break;
+        case '?':
+          // Toggle help panel
+          event.preventDefault();
+          this.toggleHelp();
           break;
       }
     }

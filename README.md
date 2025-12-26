@@ -65,7 +65,7 @@ Press `c` to open the copy menu. Copy as cURL, URL, headers, or response body.
 2. Navigate to any website and reload to capture requests
 3. Press `j`/`k` to move through requests
 4. Press `Enter` to inspect a request
-5. Press `?` for help
+5. Press `Ctrl+?` for help
 
 ### Keyboard Shortcuts
 
@@ -83,7 +83,7 @@ Press `c` to open the copy menu. Copy as cURL, URL, headers, or response body.
 | `dr` | Clear all requests |
 | `Ctrl+s` | Export data |
 | `Shift+H/L/P` | Switch tabs (Headers/Response/Preview) |
-| `?` | Toggle help |
+| `Ctrl+?` | Toggle help |
 
 #### Search Mode
 
